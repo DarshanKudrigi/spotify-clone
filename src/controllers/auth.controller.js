@@ -17,11 +17,11 @@ async function registeruser(req, res) {
         }
 
 
-        const hashpassword = await bcrypt.hash(password, 10);
     }
     finally{
         console.log("Error checking existing user");
     }
+    const hashpassword = await bcrypt.hash(password, 10);
 
     const user = await usermodel.create({username,email,password:hashpassword,role});
 
