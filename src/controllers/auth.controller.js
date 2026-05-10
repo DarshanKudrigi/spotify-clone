@@ -11,7 +11,12 @@ async function registeruser(req, res) {
 
     try{
         const existingUser = await usermodel.findOne({email});
-        $or : [{email},{username}]
+
+        query =
+        { $or: 
+            [{email}, {username}] 
+        };
+
         if(existingUser){
             return res.status(400).json({message:"User already exist"});
         }
@@ -40,4 +45,43 @@ async function registeruser(req, res) {
 }
 
 
-module.exports = {registeruser};
+async function loginuser(req,res){
+
+    const {email,username,password} = req.body;
+
+    const user =  await usermodel.findOne({
+        $or: [{email}, {username}]
+    });
+
+    if(!user){
+        return res.status(400).json({message:"Invalid credentials"});
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if(!isMatch){
+        return res.status(400).json({message:"Invalid credentials passwords do not match"});
+    }
+
+    const token = jwt.sign({
+        id:user.id,
+        role:user.role
+    }, process.env.JWT_SECRET
+    );
+
+    res.cookie("token", token);
+
+    res.status(200).json({message:"User logged in successfully", 
+        user:
+        {
+            username:user.username,
+            email:user.email,
+            role:user.role
+        }
+    });
+}
+
+
+
+
+module.exports = {registeruser, loginuser};
